@@ -2,14 +2,23 @@ module Main where
 
 import Data.List
 
--- all unique pairs of elements from a given list
-pairs :: [a] -> [(a, a)]
-pairs l = [(x, y) | (x:t) <- tails l, y <- t]
+pairs :: [a] -> [[a]]
+pairs l = [[x, y] | (x:xs) <- tails l, y <- xs]
+
+triples :: [a] -> [[a]]
+triples l = [[x, y, z] | (x:xs) <- tails l, (y:ys) <- tails xs, z <- ys]
+
+solve :: [[Int]] -> Int
+solve l = let ans = (filter (\x -> sum x == 2020) l) !! 0
+          in foldr (*) 1 ans
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let nums = map read $ lines raw :: [Int]
-  let (x, y) = (filter (\(x, y) -> x + y == 2020) $ pairs nums) !! 0
+
   putStr "Part 1: "
-  print (x * y)
+  print $ solve $ pairs nums
+
+  putStr "Part 2: "
+  print $ solve $ triples nums

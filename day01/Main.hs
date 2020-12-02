@@ -9,8 +9,8 @@ triples :: [a] -> [[a]]
 triples l = [[x, y, z] | (x:xs) <- tails l, (y:ys) <- tails xs, z <- ys]
 
 solve :: [[Int]] -> Int
-solve l = let ans = head $ filter (\x -> sum x == 2020) l
-          in foldr (*) 1 ans
+solve l = product ans
+  where ans = head $ filter (\x -> sum x == 2020) l
 
 main :: IO ()
 main = do

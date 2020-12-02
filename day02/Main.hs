@@ -21,10 +21,11 @@ main = do
   raw <- readFile "input.txt"
   let ls = map processLine $ lines raw
 
-  let ans1 = sum $ map validate1 ls
+  let f = \x -> sum . map x
+  let [ans1, ans2] = f <$> [validate1, validate2] <*> pure ls
+
   putStr "Part 1: "
   print ans1
 
-  let ans2 = sum $ map validate2 ls
   putStr "Part 2: "
   print ans2

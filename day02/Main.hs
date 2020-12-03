@@ -3,17 +3,16 @@ module Main where
 import Data.List.Split ( splitOn )
 
 processLine :: String -> (Int, Int, Char, String)
-processLine s = (lo, hi, c, z)
-  where [x, y, z] = words s
-        [lo, hi] = map read $ splitOn "-" x :: [Int]
-        c = head y
+processLine s = (num1, num2, c, pw)
+  where [x, c:_, pw] = words s
+        [num1, num2] = map read $ splitOn "-" x :: [Int]
 
 validate1 :: (Int, Int, Char, String) -> Int
-validate1 (lo, hi, c, s) = fromEnum $ lo <= len && len <= hi
-  where len = length $ filter (== c) s
+validate1 (lo, hi, c, pw) = fromEnum $ lo <= len && len <= hi
+  where len = length $ filter (== c) pw
 
 validate2 :: (Int, Int, Char, String) -> Int
-validate2 (lo, hi, c, s) = fromEnum $ (s !! (lo - 1) == c) /= (s !! (hi - 1) == c)
+validate2 (idx1, idx2, c, pw) = fromEnum $ (pw !! (idx1 - 1) == c) /= (pw !! (idx2 - 1) == c)
 
 main :: IO ()
 main = do

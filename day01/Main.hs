@@ -1,6 +1,6 @@
 module Main where
 
-import Data.List
+import Data.List ( tails )
 
 pairs :: [a] -> [[a]]
 pairs l = [[x, y] | (x:xs) <- tails l, y <- xs]

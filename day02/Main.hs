@@ -1,7 +1,6 @@
 module Main where
 
-import Data.List
-import Data.List.Split
+import Data.List.Split ( splitOn )
 
 processLine :: String -> (Int, Int, Char, String)
 processLine s = (lo, hi, c, z)

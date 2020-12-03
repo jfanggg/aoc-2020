@@ -1,15 +1,17 @@
 module Main where
 
-import Data.List.Split ( chunksOf )
-
 processLine :: String -> [Int]
 processLine = map $ fromEnum . (== '#')
+
+everyNth :: Int -> [a] -> [a]
+everyNth n (x:xs) = x : everyNth n (drop (n - 1) xs)
+everyNth _ [] = []
 
 travel :: [[Int]] -> Int -> Int -> Int
 travel input dr dc = sum collisions
   where n_col = length $ head input
         get_c = \x -> dc * x `mod` n_col
-        rows = zip [0..] $ map head $ chunksOf dr input
+        rows = zip [0..] $ everyNth dr input
         collisions = map (\(idx, row) -> row !! get_c idx) rows
 
 main :: IO ()

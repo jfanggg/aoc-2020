@@ -18,10 +18,10 @@ validate2 (lo, hi, c, s) = fromEnum $ (s !! (lo - 1) == c) /= (s !! (hi - 1) == 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
-  let ls = map processLine $ lines raw
+  let input = map processLine $ lines raw
 
   let f = \x -> sum . map x
-  let [ans1, ans2] = f <$> [validate1, validate2] <*> pure ls
+  let [ans1, ans2] = f <$> [validate1, validate2] <*> pure input
 
   putStr "Part 1: "
   print ans1

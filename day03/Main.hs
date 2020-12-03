@@ -15,11 +15,11 @@ travel input dr dc = sum collisions
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
-  let ls = map processLine $ lines raw
+  let input = map processLine $ lines raw
 
   putStr "Part 1: "
-  print $ travel ls 1 3
+  print $ travel input 1 3
 
   let slopes = [[1, 1], [1, 3], [1, 5], [1, 7], [2, 1]]
   putStr "Part 2: "
-  print $ product $ map (\[dr, dc] -> travel ls dr dc) slopes
+  print $ product $ map (\[dr, dc] -> travel input dr dc) slopes

@@ -1,16 +1,13 @@
 module Main where
 
-getRow :: String -> Int
-getRow = foldl (\acc c -> 2 * acc + fromEnum (c == 'B')) 0
-
-getCol :: String -> Int
-getCol = foldl (\acc c -> 2 * acc + fromEnum (c == 'R')) 0
+decode :: Char -> String -> Int
+decode on = foldl (\acc c -> 2 * acc + fromEnum (c == on)) 0
 
 getId :: String -> Int
 getId pass = 8 * row + col
   where (first, second) = splitAt 7 pass
-        row = getRow first
-        col = getCol second
+        row = decode 'B' first
+        col = decode 'R' second
 
 main :: IO ()
 main = do
@@ -18,13 +15,12 @@ main = do
   let input = lines raw
 
   let ids = map getId input
-  let max = maximum ids
-  let min = minimum ids
+  let [min, max] = [minimum, maximum] <*> pure ids
 
   putStr "Part 1: "
   print max
 
-  let ans2 = head $ filter (\id -> notElem id ids && (id - 1 `elem` ids) && (id + 1 `elem` ids)) [min..max]
+  let isAns = \x -> ((`elem` ids) <$> [x - 1..x + 1]) == [True, False, True] 
   putStr "Part 2: "
-  print ans2
+  print $ head $ filter isAns [min..max]
   

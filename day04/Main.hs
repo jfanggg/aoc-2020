@@ -19,31 +19,29 @@ validate1 p = fromEnum $ Map.size p == 8 || (Map.size p == 7 && not (Map.member 
 validate2 :: Passport -> Int
 validate2 p = fromEnum $ and criterion
   where [byr, iyr, eyr, hgt, hcl, ecl, pid] = map (p Map.!) ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
-        valid_ecl = ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"]
+        byrMatch = byr =~ "^[0-9]{4}$":: Bool
+        byrValue = read byr :: Int
 
-        byr_match = byr =~ "^[0-9]{4}$":: Bool
-        byr_val = read byr :: Int
+        iyrMatch = iyr =~ "^[0-9]{4}$":: Bool
+        iyrValue = read iyr :: Int
 
-        iyr_match = iyr =~ "^[0-9]{4}$":: Bool
-        iyr_val = read iyr :: Int
+        eyrMatch = eyr =~ "^[0-9]{4}$":: Bool
+        eyrValue = read eyr :: Int
 
-        eyr_match = eyr =~ "^[0-9]{4}$":: Bool
-        eyr_val = read eyr :: Int
-
-        hgt_match = hgt =~ "^[0-9]+(in|cm)$" :: Bool
-        (_, hgt_val', hgt_unit) = hgt =~ "[0-9]+" :: (String, String, String)
-        hgt_val = read hgt_val' :: Int
+        hgtMatch = hgt =~ "^[0-9]+(in|cm)$" :: Bool
+        (_, hgtValue', hgtUnit) = hgt =~ "[0-9]+" :: (String, String, String)
+        hgtValue = read hgtValue' :: Int
  
-        hcl_match = hcl =~ "^#[0-9a-f]{6}$" :: Bool
-        pid_match = pid =~ "^[0-9]{9}$" :: Bool
+        hclMatch = hcl =~ "^#[0-9a-f]{6}$" :: Bool
+        pidMatch = pid =~ "^[0-9]{9}$" :: Bool
 
         criterion = 
-          [ byr_match && iyr_match && eyr_match && hgt_match && hcl_match && pid_match
-          , 1920 <= byr_val && byr_val <= 2002
-          , 2010 <= iyr_val && iyr_val <= 2020
-          , 2020 <= eyr_val && eyr_val <= 2030
-          , if hgt_unit == "cm" then 150 <= hgt_val && hgt_val <= 193 else 59 <= hgt_val && hgt_val <= 76 
-          , ecl `elem` valid_ecl]
+          [ byrMatch && iyrMatch && eyrMatch && hgtMatch && hclMatch && pidMatch
+          , 1920 <= byrValue && byrValue <= 2002
+          , 2010 <= iyrValue && iyrValue <= 2020
+          , 2020 <= eyrValue && eyrValue <= 2030
+          , if hgtUnit == "cm" then 150 <= hgtValue && hgtValue <= 193 else 59 <= hgtValue && hgtValue <= 76 
+          , ecl `elem` ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"] ]
 
 main :: IO ()
 main = do

@@ -17,5 +17,14 @@ main = do
   raw <- readFile "input.txt"
   let input = lines raw
 
+  let ids = map getId input
+  let max = maximum ids
+  let min = minimum ids
+
   putStr "Part 1: "
-  print $ maximum $ map getId input
+  print max
+
+  let ans2 = head $ filter (\id -> notElem id ids && (id - 1 `elem` ids) && (id + 1 `elem` ids)) [min..max]
+  putStr "Part 2: "
+  print ans2
+  

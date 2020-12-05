@@ -10,9 +10,9 @@ everyNth _ [] = []
 travel :: [[Int]] -> Int -> Int -> Int
 travel input dr dc = sum collisions
   where numCols = length $ head input
-        getC = \x -> dc * x `mod` numCols
-        rows = zip [0..] $ everyNth dr input
-        collisions = map (\(idx, row) -> row !! getC idx) rows
+        getCol = \x -> dc * x `mod` numCols
+        rows = zip [0..] (everyNth dr input)
+        collisions = map (\(idx, row) -> row !! getCol idx) rows
 
 main :: IO ()
 main = do

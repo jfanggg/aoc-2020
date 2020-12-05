@@ -15,12 +15,12 @@ main = do
   let input = lines raw
 
   let ids = map getId input
-  let [min, max] = [minimum, maximum] <*> pure ids
+  let [lo, hi] = [minimum, maximum] <*> pure ids
 
   putStr "Part 1: "
-  print max
+  print hi
 
   let isAns = \x -> ((`elem` ids) <$> [x - 1..x + 1]) == [True, False, True] 
   putStr "Part 2: "
-  print $ head $ filter isAns [min..max]
+  print $ head $ filter isAns [lo..hi]
   

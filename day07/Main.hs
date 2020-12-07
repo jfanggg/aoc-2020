@@ -1,47 +1,44 @@
 module Main where
 
-import qualified Data.Set as S
-import qualified Data.Map as M
 import Text.Regex.PCRE
+import qualified Data.Set as S
 
-type Requirement = (String, Int)
 type Edge = (String, String, Int)
 
-processReq :: String -> Requirement
+-- e.g. "1 bright white" -> ("bright white", 1)
+processReq :: String -> (String, Int)
 processReq s = (color, amount)
   where (head:tail) = words s
         amount = read head :: Int 
         color = unwords tail
 
 processLine :: String -> [Edge]
-processLine line = map (\(child, num) -> (parent, child, num)) reqs 
-  where c = line =~ "^(.*?) bags" :: [[String]]
-        [_, parent] = head c
+processLine line = edges
+  where bagCapture = line =~ "^(.*?) bags" :: [[String]]
+        [_, parent] = head bagCapture
 
-        r = line =~ "(\\d+ .*?) bag" :: [[String]]
-        reqs = map (\[_, req] -> processReq req) r
+        reqsCapture = line =~ "(\\d+ .*?) bag" :: [[String]]
+        reqs = map (\[_, req] -> processReq req) reqsCapture
 
-getAncestors :: [Edge] -> String -> [String]
-getAncestors allEdges root = root : concat parentAncestors
+        edges = map (\(child, num) -> (parent, child, num)) reqs 
+
+getAncestors :: [Edge] -> String -> S.Set String
+getAncestors allEdges root = foldr S.union (S.singleton root) parentAncestors
   where edges = filter (\(_, c, _) -> c == root) allEdges
-        parents = map (\(p, _, _) -> p) edges
-        parentAncestors = map (getAncestors allEdges) parents
+        parentAncestors = map (\(p, _, _) -> getAncestors allEdges p) edges
 
-countChildren :: [Edge] -> String -> Int
-countChildren allEdges root = 1 + sum childrenCounts
+countDescendants :: [Edge] -> String -> Int
+countDescendants allEdges root = 1 + sum childrenCounts
   where edges = filter (\(p, _, _) -> p == root) allEdges
-        childrenCounts = map (\(_, c, v) -> v * countChildren allEdges c) edges
+        childrenCounts = map (\(_, c, v) -> v * countDescendants allEdges c) edges
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
-  let input = lines raw
-
-  let edges = concatMap processLine input
-  let ancestors = S.fromList $ getAncestors edges "shiny gold"
+  let edges = concatMap processLine $ lines raw
 
   putStr "Part 1: "
-  print $ S.size ancestors - 1
+  print $ S.size (getAncestors edges "shiny gold") - 1
 
   putStr "Part 2: "
-  print $ countChildren edges "shiny gold" - 1
+  print $ countDescendants edges "shiny gold" - 1

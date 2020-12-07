@@ -1,6 +1,6 @@
 module Main where
 
-import Text.Regex.TDFA
+import Text.Regex.PCRE
 import Data.List.Split ( splitOn )
 import qualified Data.Map as Map
 

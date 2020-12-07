@@ -27,6 +27,11 @@ getAncestors allEdges root = root : concat parentAncestors
         parents = map (\(p, _, _) -> p) edges
         parentAncestors = map (getAncestors allEdges) parents
 
+countChildren :: [Edge] -> String -> Int
+countChildren allEdges root = 1 + sum childrenCounts
+  where edges = filter (\(p, _, _) -> p == root) allEdges
+        childrenCounts = map (\(_, c, v) -> v * countChildren allEdges c) edges
+
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
@@ -37,3 +42,6 @@ main = do
 
   putStr "Part 1: "
   print $ S.size ancestors - 1
+
+  putStr "Part 2: "
+  print $ countChildren edges "shiny gold" - 1

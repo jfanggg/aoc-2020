@@ -1,7 +1,6 @@
 module Main where
 
 import Text.Regex.PCRE
-import qualified Data.List as L
 import qualified Data.Set as S
 import qualified Data.Map as M
 
@@ -30,12 +29,12 @@ processLine line = edges
         edges = map (uncurry $ Edge parent) reqs 
 
 getParentMap :: [Edge] -> M.Map Node (S.Set Node)
-getParentMap edges = M.fromListWith S.union x
-  where x = map (\e -> (child e, S.singleton (parent e))) edges
+getParentMap edges = M.fromListWith S.union list
+  where list = map (\e -> (child e, S.singleton (parent e))) edges
 
 getChildrenMap :: [Edge] -> M.Map Node [(Node, Int)]
-getChildrenMap edges = M.fromListWith (++) x
-  where x = map (\e -> (parent e, [(child e, val e)])) edges
+getChildrenMap edges = M.fromListWith (++) list
+  where list = map (\e -> (parent e, [(child e, val e)])) edges
 
 getAncestors ::  M.Map Node (S.Set Node) -> Node -> S.Set Node
 getAncestors parentMap root = S.foldr S.union (S.singleton root) parentAncestors

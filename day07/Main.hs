@@ -3,7 +3,11 @@ module Main where
 import Text.Regex.PCRE
 import qualified Data.Set as S
 
-type Edge = (String, String, Int)
+data Edge = Edge {
+  parent :: String,
+  child :: String,
+  val :: Int
+}
 
 -- e.g. "1 bright white" -> ("bright white", 1)
 processReq :: String -> (String, Int)
@@ -20,17 +24,17 @@ processLine line = edges
         reqsCapture = line =~ "(\\d+ .*?) bag" :: [[String]]
         reqs = map (\[_, req] -> processReq req) reqsCapture
 
-        edges = map (\(child, num) -> (parent, child, num)) reqs 
+        edges = map (uncurry $ Edge parent) reqs 
 
 getAncestors :: [Edge] -> String -> S.Set String
 getAncestors allEdges root = foldr S.union (S.singleton root) parentAncestors
-  where edges = filter (\(_, c, _) -> c == root) allEdges
-        parentAncestors = map (\(p, _, _) -> getAncestors allEdges p) edges
+  where edges = filter (\e -> child e == root) allEdges
+        parentAncestors = map (getAncestors allEdges . parent) edges
 
 countDescendants :: [Edge] -> String -> Int
 countDescendants allEdges root = 1 + sum childrenCounts
-  where edges = filter (\(p, _, _) -> p == root) allEdges
-        childrenCounts = map (\(_, c, v) -> v * countDescendants allEdges c) edges
+  where edges = filter (\e -> parent e == root) allEdges
+        childrenCounts = map (\e -> val e * countDescendants allEdges (child e)) edges
 
 main :: IO ()
 main = do

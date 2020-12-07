@@ -1,11 +1,14 @@
 module Main where
 
 import Text.Regex.PCRE
+import qualified Data.List as L
 import qualified Data.Set as S
+import qualified Data.Map as M
 
+type Node = String
 data Edge = Edge {
-  parent :: String,
-  child :: String,
+  parent :: Node,
+  child :: Node,
   val :: Int
 }
 
@@ -26,23 +29,34 @@ processLine line = edges
 
         edges = map (uncurry $ Edge parent) reqs 
 
-getAncestors :: [Edge] -> String -> S.Set String
-getAncestors allEdges root = foldr S.union (S.singleton root) parentAncestors
-  where edges = filter (\e -> child e == root) allEdges
-        parentAncestors = map (getAncestors allEdges . parent) edges
+getParentMap :: [Edge] -> M.Map Node (S.Set Node)
+getParentMap edges = M.fromListWith S.union x
+  where x = map (\e -> (child e, S.singleton (parent e))) edges
 
-countDescendants :: [Edge] -> String -> Int
-countDescendants allEdges root = 1 + sum childrenCounts
-  where edges = filter (\e -> parent e == root) allEdges
-        childrenCounts = map (\e -> val e * countDescendants allEdges (child e)) edges
+getChildrenMap :: [Edge] -> M.Map Node [(Node, Int)]
+getChildrenMap edges = M.fromListWith (++) x
+  where x = map (\e -> (parent e, [(child e, val e)])) edges
+
+getAncestors ::  M.Map Node (S.Set Node) -> Node -> S.Set Node
+getAncestors parentMap root = S.foldr S.union (S.singleton root) parentAncestors
+  where parents = M.findWithDefault S.empty root parentMap
+        parentAncestors = S.map (getAncestors parentMap) parents
+
+countDescendants :: M.Map Node [(Node, Int)] -> String -> Int
+countDescendants childrenMap root = 1 + sum childrenCounts
+  where children = M.findWithDefault [] root childrenMap
+        childrenCounts = map (\ (c, v) -> v * countDescendants childrenMap c) children
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let edges = concatMap processLine $ lines raw
 
+  let parentMap = getParentMap edges
+  let childrenMap = getChildrenMap edges
+
   putStr "Part 1: "
-  print $ S.size (getAncestors edges "shiny gold") - 1
+  print $ S.size (getAncestors parentMap "shiny gold") - 1
 
   putStr "Part 2: "
-  print $ countDescendants edges "shiny gold" - 1
+  print $ countDescendants childrenMap "shiny gold" - 1

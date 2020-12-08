@@ -57,16 +57,13 @@ main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let program = map processLine $ lines raw
+  let run0 = run (State 0 0) S.empty
 
-  let state0 = State 0 0
-  let run0 = run state0 S.empty
-
-  putStr "Part 1: "
   let Left ans1 = run0 program
+  putStr "Part 1: "
   print ans1
 
-  putStr "Part 2: "
-  let altered = mapMaybe (alterProgram program) [1..length program - 1]
+  let altered = mapMaybe (alterProgram program) [0..length program - 1]
   let ans2 = head $ rights $ map run0 altered
-
+  putStr "Part 2: "
   print ans2

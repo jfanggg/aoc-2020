@@ -14,9 +14,9 @@ data Edge = Edge {
 -- e.g. "1 bright white" -> ("bright white", 1)
 processReq :: String -> (String, Int)
 processReq s = (color, amount)
-  where (head:tail) = words s
-        amount = read head :: Int 
-        color = unwords tail
+  where (h:t) = words s
+        amount = read h :: Int 
+        color = unwords t
 
 processLine :: String -> [Edge]
 processLine line = edges

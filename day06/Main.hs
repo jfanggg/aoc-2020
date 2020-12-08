@@ -4,8 +4,8 @@ import Data.List.Split ( splitOn )
 import qualified Data.Set as S
 
 combine :: (S.Set Char -> S.Set Char -> S.Set Char) -> String -> Int
-combine func group = S.size $ foldr func head tail
-  where (head:tail) = map S.fromList $ words group
+combine func group = S.size $ foldr func h t
+  where (h:t) = map S.fromList $ words group
 
 main :: IO ()
 main = do

@@ -1,8 +1,6 @@
 module Main where
 
-import Text.Regex.PCRE
 import qualified Data.Set as S
-import qualified Data.Map as M
 import Data.List.Split
 import Data.Maybe 
 
@@ -10,6 +8,7 @@ data State = State {
   pc :: Int,
   acc :: Int
 } deriving Show
+
 data Operation = Nop | Acc | Jmp deriving (Show, Eq)
 
 type Instruction = (Operation, Int)
@@ -20,19 +19,17 @@ parseOperation "nop" = Nop
 parseOperation "acc" = Acc
 parseOperation "jmp" = Jmp
 
-sign :: Char -> Int
-sign '+' =  1
-sign '-' = -1
-
 processLine :: String -> Instruction
 processLine s = (parseOperation op', arg)
-  where [op', arg'] = splitOn " " s
-        arg = sign (head arg') * (read $ tail arg' :: Int)
+  where [op', arg'] = splitOn " " s        
+
+        sign = if head arg' == '+' then 1 else -1
+        arg = sign * (read $ tail arg' :: Int)
 
 stepState :: State -> Instruction -> State
-stepState state (Nop, _) = State (pc state + 1) (acc state)
+stepState state (Nop, _)   = State (pc state + 1)   (acc state)
 stepState state (Jmp, val) = State (pc state + val) (acc state)
-stepState state (Acc, val) = State (pc state + 1) (acc state + val)
+stepState state (Acc, val) = State (pc state + 1)   (acc state + val)
 
 findLoop :: Program -> State -> S.Set Int -> Maybe Int
 findLoop program state seen = if pc state >= length program then Nothing else recurse
@@ -63,7 +60,7 @@ main = do
   print $ findLoop program (State 0 0) S.empty
 
   putStr "Part 2: "
-  let altered = filter Data.Maybe.isJust $ map (alterProgram program) [1..length program - 1]
-  let correct = head $ filter (\p -> Data.Maybe.isNothing (findLoop (Data.Maybe.fromJust p) (State 0 0) S.empty)) altered
+  let altered = mapMaybe (alterProgram program) [1..length program - 1]
+  let correct = head $ filter (\p -> Data.Maybe.isNothing (findLoop p (State 0 0) S.empty)) altered
 
-  print $ runProgram (Data.Maybe.fromJust correct) (State 0 0)
+  print $ runProgram correct (State 0 0)

@@ -1,35 +1,42 @@
 module Main where
 
-import Text.Regex.PCRE
-import qualified Data.Set as S
-import qualified Data.Map as M
 import Data.List ( tails )
+import Data.Maybe ( mapMaybe )
 
-preambleLength :: Int
-preambleLength = 25
+preambleLen :: Int
+preambleLen = 25
 
-slice :: Int -> Int -> [a] -> [a]
-slice from to xs = take (to - from + 1) (drop from xs)
+minInt :: Int
+minInt = minBound
 
-check :: [Int] -> Int -> Bool
-check nums index = val `elem` [x + y | (x:xs) <- tails preceding, y <- xs]
-  where val = nums !! index
-        preceding = slice (index - preambleLength) (index - 1) nums
+maxInt :: Int
+maxInt = maxBound
 
-findRange :: [Int] -> Int -> Int
-findRange nums target = minimum r + maximum r
-  where rs = [slice s e nums | s <- [0..length nums - 1], e <- [s + 1 .. length nums - 1]]
-        r = head $ filter (\x -> sum x == target) rs
+checkWindow :: [Int] -> Maybe Int
+checkWindow window = if not valid then Just h else Nothing
+  where (h:preamble) = reverse window
+        valid = h `elem` [x + y | (x:xs) <- tails preamble, y <- xs]
+
+findRange :: Int -> Int -> Int -> Int -> [Int] -> Maybe Int
+findRange target sumAcc minAcc maxAcc (h:t)  = res
+  where sumAcc' = sumAcc + h
+        minAcc' = min minAcc h
+        maxAcc' = max maxAcc h
+        res 
+          | sumAcc' == target = Just (maxAcc' + minAcc')
+          | sumAcc' >  target = Nothing
+          | otherwise         = findRange target sumAcc' minAcc' maxAcc' t
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let nums = map read $ lines raw :: [Int]
 
-  let idx = head $ filter (not . check nums) [preambleLength..length nums - 1]
-  let ans1 = nums !! idx
+  let windows = map (take $ preambleLen + 1) $ take (length nums - preambleLen) $ tails nums
+  let ans1 = head $ mapMaybe checkWindow windows
   putStr "Part 1: "
   print ans1
 
+  let ans2 = head $ mapMaybe (findRange ans1 0 maxInt minInt) $ tails nums
   putStr "Part 2: "
-  print $ findRange nums ans1
+  print ans2

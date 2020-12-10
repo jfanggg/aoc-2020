@@ -15,7 +15,7 @@ checkWindow window = if not valid then Just h else Nothing
 findRange :: V.Vector Int -> Int -> Int
 findRange nums target = V.maximum range + V.minimum range
   where find s e acc 
-          | acc == target = V.slice s (e - s + 1) nums
+          | acc == target = V.slice s (e - s) nums
           | acc >  target = find (s + 1) e (acc - nums V.! s)
           | otherwise     = find s (e + 1) (acc + nums V.! e)
         

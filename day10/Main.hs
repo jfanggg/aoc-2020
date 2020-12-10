@@ -20,15 +20,15 @@ main = do
   let nums = map read $ lines raw :: [Int]
 
   let end = maximum nums + 3
-  let sorted = V.fromList $ 0 : sort nums ++ [end]
+  let sorted = 0 : sort nums ++ [end]
 
-  let diffs = map (\idx -> sorted V.! (idx + 1) - sorted V.! idx) [0..length sorted - 2]
+  let diffs = zipWith (-) (tail sorted) sorted
   let ones   = length $ filter (== 1) diffs
   let threes = length $ filter (== 3) diffs
 
   putStr "Part 1: "
   print $ ones * threes
 
-  let dp = foldl countPaths M.empty sorted
+  let dp = foldl countPaths M.empty (V.fromList sorted)
   putStr "Part 2: "
   print $ dp M.! end

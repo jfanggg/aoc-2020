@@ -5,14 +5,13 @@ import qualified Data.Vector as V
 import qualified Data.Map as M
 
 countPaths :: M.Map Int Int -> Int -> M.Map Int Int
-countPaths dp num = dpUpdated
-  where val = M.findWithDefault 1 num dp
+countPaths dp num = updated
+  where val = M.findWithDefault 0 num dp
         
         updateKeys = [num + 1 .. num + 3]
         updateVals = map (val+) $ M.findWithDefault 0 <$> updateKeys <*> pure dp
 
-        updates = M.fromList $ zip updateKeys updateVals
-        dpUpdated = M.union updates dp
+        updated = M.fromList $ zip (num:updateKeys) (val:updateVals)
 
 main :: IO ()
 main = do
@@ -29,6 +28,6 @@ main = do
   putStr "Part 1: "
   print $ ones * threes
 
-  let dp = foldl countPaths M.empty (V.fromList sorted)
+  let dp = foldl countPaths (M.singleton 0 1) (V.fromList sorted)
   putStr "Part 2: "
   print $ dp M.! end

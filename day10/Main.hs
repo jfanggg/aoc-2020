@@ -20,7 +20,7 @@ main = do
   let nums = map read $ lines raw :: [Int]
 
   let end = maximum nums + 3
-  let sorted = V.fromList $ [0] ++ sort nums ++ [end]
+  let sorted = V.fromList $ 0 : sort nums ++ [end]
 
   let diffs = map (\idx -> sorted V.! (idx + 1) - sorted V.! idx) [0..length sorted - 2]
   let ones   = length $ filter (== 1) diffs

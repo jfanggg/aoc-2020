@@ -13,8 +13,8 @@ range n = V.generate n id
 parseStatus :: Char -> Status
 parseStatus c = case c of 
   'L' -> E
-  '.' -> F
   '#' -> O
+  '.' -> F
 
 deltas :: [Vec2]
 deltas = [(r, c) | r <- [-1..1], c <- [-1..1], not (r == 0 && c == 0)]
@@ -46,20 +46,21 @@ stepGrid p2 grid = V.map (\r -> V.map (\c -> update (r, c)) cols) rows
 
         update = stepPosition p2 grid
 
-findEquilibrium :: Bool -> Grid -> Grid
-findEquilibrium p2 old = if old /= new then findEquilibrium p2 new else old
-  where new = stepGrid p2 old
+finalOccupied :: Bool -> Grid -> Int
+finalOccupied p2 grid = sum $ V.map (length . V.filter (==O)) fixedPoint
+  where run old = let new = stepGrid p2 old in 
+                  if old /= new then run new else old
+
+        fixedPoint = run grid
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let grid = V.fromList $ map (V.fromList . map parseStatus) $ lines raw
-  let countOccupancies = sum . V.map (length . V.filter (==O))
+  let [ans1, ans2] = flip finalOccupied grid <$> [False, True]
 
-  let ans1 = countOccupancies $ findEquilibrium False grid
   putStr "Part 1: "
   print ans1 
 
-  let ans2 = countOccupancies $ findEquilibrium True grid
   putStr "Part 2: "
   print ans2

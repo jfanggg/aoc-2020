@@ -27,7 +27,7 @@ parseEqs ids = res
         res = map (second read) filtered
 
 roundN :: Integer -> Integer -> Integer
-roundN x n = x + n - (x `mod` n)
+roundN x n = x + (-x) `mod` n
 
 findEarliest :: Input -> Integer
 findEarliest input = minimumBy (comparing f) vals
@@ -49,7 +49,6 @@ modInv a m = x `mod` m
 
 combine :: (Integer, Integer) -> (Integer, Integer) -> (Integer, Integer)
 combine (x0, m0) (x1, m1) = (a `mod` m, m)
--- combine (x0, m0) (x1, m1) = (m0, m1, m0', m1')
   where m1' = modInv m1 m0
         m0' = modInv m0 m1
         a = m1' * m1 * x0 + m0' * m0 * x1
@@ -59,7 +58,7 @@ main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let input = parseInput raw
-  
+
   let id = findEarliest input
   let wait = roundN (time input) id - time input
   putStr "Part 1: "

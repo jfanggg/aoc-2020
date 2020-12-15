@@ -6,14 +6,8 @@ import Data.Ord ( comparing )
 import Data.List ( minimumBy )
 import Data.Bifunctor ( Bifunctor(second) )
 
-data Input = Input {
-  time :: Integer,
-  ids :: [String]
-} deriving (Show, Eq);
-
-
-parseInput :: String -> Input
-parseInput raw = Input time ids
+parseInput :: String -> (Integer, [String])
+parseInput raw = (time, ids)
   where [line1, line2] = lines raw
         time = read line1 :: Integer
         ids = splitOn "," line2
@@ -29,10 +23,10 @@ parseEqs ids = res
 roundN :: Integer -> Integer -> Integer
 roundN x n = x + (-x) `mod` n
 
-findEarliest :: Input -> Integer
-findEarliest input = minimumBy (comparing f) vals
-  where f = roundN (time input)
-        vals = mapMaybe parseId (ids input)
+findEarliest :: (Integer, [String]) -> Integer
+findEarliest (time, ids) = minimumBy (comparing f) vals
+  where f = roundN time
+        vals = mapMaybe parseId ids
 
 -- finds x, y s.t. ax + by = gcd(a, b)
 extendedEuclid :: Integer -> Integer -> (Integer, Integer)
@@ -57,14 +51,14 @@ combine (x0, m0) (x1, m1) = (a `mod` m, m)
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
-  let input = parseInput raw
+  let input@(time, ids) = parseInput raw
 
-  let id = findEarliest input
-  let wait = roundN (time input) id - time input
+  let busId = findEarliest input
+  let wait = roundN time busId - time
   putStr "Part 1: "
-  print $ id * wait
+  print $ busId * wait
 
-  let (h:t) = parseEqs (ids input)
-  let (ans2, _) = foldl combine h t 
+  let (h:t) = parseEqs ids
+  let (ans2, _) = foldr combine h t 
   putStr "Part 2: "
   print ans2

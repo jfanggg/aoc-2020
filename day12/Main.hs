@@ -5,9 +5,12 @@ type Vec2 = (Int, Int)
 
 data State = State {
   position :: Vec2,
-  waypoint :: Vec2,
   direction :: Vec2
 } deriving (Show, Eq);
+
+parseInstruction :: String -> Instruction
+parseInstruction (h:t) = (h, val)
+  where val = read t :: Int
 
 toVec :: Char -> Vec2
 toVec c = case c of 
@@ -16,10 +19,6 @@ toVec c = case c of
   'S' -> ( 0, -1)
   'W' -> (-1,  0)
 
-parseInstruction :: String -> Instruction
-parseInstruction (h:t) = (h, val)
-  where val = read t :: Int
-
 ccw :: Vec2 -> Vec2
 ccw (x, y) = (-y, x)
 
@@ -27,25 +26,14 @@ rotate :: Vec2 -> Int -> Vec2
 rotate vec degs = iterate ccw vec !! turns
   where turns = (degs `div` 90) `mod` 4
 
-step1 :: State -> Instruction -> State
-step1 (State pos@(px, py) wp dir@(dx, dy)) (c, v) = 
-  let new p d = State p wp d in
-  case c of 
-      'L' ->  new pos (rotate dir v)
-      'R' ->  new pos (rotate dir (-v))
-      'F' ->  new (px + v * dx, py + v * dy) dir
-      _   ->  let (dX, dY) = toVec c in 
-              new (px + v * dX, py + v * dY) dir
-
-step2 :: State -> Instruction -> State
-step2 (State pos@(px, py) wp@(wx, wy) dir) (c, v) = 
-  let new p w = State p w dir in
-  case c of 
-    'L' ->  new pos (rotate wp v) 
-    'R' ->  new pos (rotate wp $ -v) 
-    'F' ->  new (px + v * wx, py + v * wy) wp
-    _   ->  let (dX, dY) = toVec c in 
-            new pos (wx + v * dX, wy + v * dY) 
+step :: Bool -> State -> Instruction -> State
+step p2 (State pos@(px, py) dir@(dx, dy)) (c, v) = case c of 
+  'L' ->  State pos (rotate dir v)
+  'R' ->  State pos (rotate dir (-v))
+  'F' ->  State (px + v * dx, py + v * dy) dir
+  _   ->  let (dX, dY) = toVec c in 
+          if p2 then State pos (dx + v * dX, dy + v * dY) 
+                else State (px + v * dX, py + v * dY) dir
 
 main :: IO ()
 main = do
@@ -53,12 +41,12 @@ main = do
   let instructions = map parseInstruction $ lines raw
   let east = toVec 'E'
 
-  let init1 = State (0, 0) (0, 0) east
-  let State (x1, y1) _ _ = foldl step1 init1 instructions
+  let init1 = State (0, 0) east
+  let State (x1, y1) _ = foldl (step False) init1 instructions 
   putStr "Part 1: "
   print $ abs x1 + abs y1
 
-  let init2 = State (0, 0) (10, 1) east
-  let State (x2, y2) _ _ = foldl step2 init2 instructions
+  let init2 = State (0, 0) (10, 1)
+  let State (x2, y2) _ = foldl (step True) init2 instructions 
   putStr "Part 2: "
   print $ abs x2 + abs y2

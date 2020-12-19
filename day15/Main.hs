@@ -18,8 +18,8 @@ main = do
       when (time == 2020) $ putStrLn $ "Part 1: " ++ show val
       when (time == n)    $ putStrLn $ "Part 2: " ++ show val
 
-      lookup <- V.read memory val
+      look <- V.read memory val
       V.write memory val time
-      return (if lookup == -1 then 0 else time - lookup)
+      return (if look == -1 then 0 else time - look)
 
   foldM_ loop v [length input..n]

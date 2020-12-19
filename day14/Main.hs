@@ -33,10 +33,9 @@ powerset (x:xs) = [x + p | p <- ps] ++ ps
   where ps = powerset xs
 
 updates1 :: String -> Integer -> Integer -> M.Map Integer Integer 
-updates1 mask addr val = update
+updates1 mask addr val = M.singleton addr maskedVal
   where maskBit m x = if m == 'X' then x else m
-        masked = parseBin $ zipWith maskBit mask (toBin val)
-        update = M.singleton addr masked
+        maskedVal = parseBin $ zipWith maskBit mask (toBin val)
 
 updates2 :: String -> Integer -> Integer -> M.Map Integer Integer 
 updates2 mask addr val = updates
@@ -50,29 +49,28 @@ updates2 mask addr val = updates
         updates = M.fromList $ [(baseAddr + x, val) | x <- powerset xVals]
 
 write :: Bool -> State -> String -> State
-write p2 (State mask mem) line = State mask mem'
+write p2 (State mask mem) line = State mask updatedMem
   where capture = line =~ "mem\\[(\\d+)\\] = (\\d+)" :: [[String]]
         [addr, val] = map read (tail $ head capture) :: [Integer]
 
         updates = (if p2 then updates2 else updates1) mask addr val
-        mem' = M.union updates mem
+        updatedMem = M.union updates mem
 
-execute :: Bool -> State -> String -> State 
-execute p2 state line
+executeLine :: Bool -> State -> String -> State 
+executeLine p2 state line
   | isMask line = updateMask state line
   | otherwise   = write p2 state line
+
+solve :: [String] -> Bool -> Integer
+solve ls p2 = M.foldr (+) 0 mem
+  where State _ mem = foldl (executeLine p2) (State "" M.empty) ls
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let ls = lines raw
-  let state0 = State "" M.empty
-  
-  let State _ mem1 = foldl (execute False) state0 ls
-  putStr "Part 1: "
-  print $ M.foldr (+) 0 mem1
 
-  let State _ mem2 = foldl (execute True) state0 ls
-  putStr "Part 2: "
-  print $ M.foldr (+) 0 mem2
+  let [ans1, ans2] = solve ls <$> [False, True]  
+  putStrLn $ "Part 1: " ++ show ans1
+  putStrLn $ "Part 2: " ++ show ans2
  

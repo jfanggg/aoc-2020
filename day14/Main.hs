@@ -1,15 +1,14 @@
 module Main where
 
 import Text.Regex.PCRE
-import Data.Char (digitToInt)
-import Data.Bits
+import Data.Char (digitToInt, intToDigit)
+import Numeric ( showIntAtBase )
 import qualified Data.Map as M
 
 type Memory = M.Map Integer Integer
 
 data State = State {
-  mask0 :: Integer,
-  mask1 :: Integer,
+  mask :: String,
   memory :: M.Map Integer Integer
 } deriving (Eq, Show);
 
@@ -19,29 +18,33 @@ isMask s = s =~ "mask = [01X]{36}"
 parseBin :: String -> Integer
 parseBin = foldl (\acc c -> 2 * acc + toInteger (digitToInt c)) 0
 
-updateMask :: State -> String -> State
-updateMask (State _ _ mem) mask = State m0' m1' mem 
-  where m0' = parseBin $ map (\c -> if c == '0' then '0' else '1') mask
-        m1' = parseBin $ map (\c -> if c == '1' then '1' else '0') mask
+toBin :: Integer -> String
+toBin x = replicate (36 - length bin) '0' ++ bin
+  where bin = showIntAtBase 2 intToDigit x ""
 
-writeVal :: State -> String -> State
-writeVal (State m0 m1 mem) line = State m0 m1 mem'
+updateMask :: State -> String -> State
+updateMask (State _ mem) line = State mask mem 
+  where mask = drop 7 line
+
+write :: State -> String -> State
+write (State mask mem) line = State mask mem'
   where capture = line =~ "mem\\[(\\d+)\\] = (\\d+)" :: [[String]]
-        (_:t) = head capture 
-        [addr, val] = map read t :: [Integer]
-        masked = (val .|. m1) .&. m0
+        [addr, val] = map read (tail $ head capture) :: [Integer]
+
+        f m x = if m == 'X' then x else m
+        masked = parseBin $ zipWith f mask (toBin val)
         mem' = M.insert addr masked mem
 
 execute :: State -> String -> State 
 execute state line
   | isMask line = updateMask state line
-  | otherwise   = writeVal state line
+  | otherwise   = write state line
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let ls = lines raw
   
-  let state1 = foldl execute (State 0 0 M.empty) ls
+  let State _ mem1 = foldl execute (State "" M.empty) ls
   putStr "Part 1: "
-  print $ M.foldr (+) 0 (memory state1)
+  print $ M.foldr (+) 0 mem1

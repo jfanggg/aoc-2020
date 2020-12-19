@@ -1,27 +1,22 @@
 module Main where
 
-import qualified Data.Map as M
-
-type Memory = M.Map Int Int
-data State = State {
-  val :: Integer,
-  time :: Integer,
-  memory :: M.Map Integer Integer
-} deriving (Eq, Show);
-
-step :: State -> State
-step (State v t memory) = State v' (t + 1) (M.insert v t memory)
-  where v' = if M.member v memory then t - memory M.! v else 0
+import           Control.Monad               (forM_, foldM_, when)
+import qualified Data.Vector.Unboxed.Mutable as V
 
 main :: IO ()
 main = do
   let input = [0, 6, 1, 7, 2, 19, 20]
   let (h, [t]) = splitAt (length input - 1) input
 
-  let memory = M.fromList $ zip h [1..]
+  memory <- V.replicate 30000000 (-1 :: Int)
+  forM_ (zip h [1..]) (uncurry $ V.write memory)
 
-  let state0 = State t (fromIntegral $ length input) memory
-  let seq = iterate step state0
+  let loop val t = do
+      when (t == 2020)      $ putStrLn $ "Part 1: " ++ show val
+      when (t == 30000000)  $ putStrLn $ "Part 2: " ++ show val
 
-  let State ans1 _ _ = seq !! (2020 - length input)
-  putStrLn $ "Part 1: " ++ show ans1
+      l <- V.read memory val
+      V.write memory val t
+      return (if l == -1 then 0 else t - l)
+
+  foldM_ loop t [length input..30000000]

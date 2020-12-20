@@ -4,7 +4,6 @@ import Text.Regex.PCRE
 import Data.List ( isPrefixOf, transpose )
 import Data.List.Split ( splitOn )
 import Data.Maybe ( isNothing, mapMaybe )
-import Debug.Trace
 
 type Range = (Int, Int)
 data Rule = Rule {
@@ -12,15 +11,15 @@ data Rule = Rule {
   ranges :: [Range]
 } deriving (Show, Eq);
 
-parseCapture :: [String] -> Maybe Rule
-parseCapture xs = Just $ Rule name [(a, b), (c, d)]
+parseRuleCapture :: [String] -> Maybe Rule
+parseRuleCapture xs = Just $ Rule name [(a, b), (c, d)]
   where _:name:vals = xs
         [a, b, c, d] = map read vals :: [Int]
 
-parseFields :: String -> Maybe Rule
-parseFields line = rule
+parseRule :: String -> Maybe Rule
+parseRule line = rule
   where capture = line =~ "([a-z ]+): (\\d+)-(\\d+) or (\\d+)-(\\d+)" :: [[String]]
-        rule = if null capture then Nothing else parseCapture (head capture)
+        rule = if null capture then Nothing else parseRuleCapture (head capture)
 
 check :: Rule -> Int -> Bool
 check (Rule _ rs) val = any (\ (lo, hi) -> lo <= val && val <= hi) rs
@@ -32,36 +31,36 @@ checkRow rules row = if null invalid then Nothing else Just $ sum invalid
 matrixify :: [String] -> [[Int]]
 matrixify = map (map read . splitOn ",")
 
-getValidRules :: [Rule] -> [Int] -> [Rule]
-getValidRules rules group = goodRules
-  where goodRules = filter (\r -> all (check r) group) rules
+validateRules :: [Rule] -> [Int] -> [Rule]
+validateRules rules group = filter (\r -> all (check r) group) rules
 
-deduce :: [[Rule]] -> [[Rule]]
-deduce old = if old == new then new else deduce new
-  where confirmed = map (name . head) $ filter (\g -> length g == 1) old
-        new = map (\g -> if length g == 1 then g else filter (\r -> name r `notElem` confirmed) g) old
+deduceRules :: [[Rule]] -> [[Rule]]
+deduceRules old = if old == new then new else deduceRules new
+  where confirmedNames = map (name . head) $ filter (\g -> length g == 1) old
+        filterRuleGroup g 
+          | length g > 1 = filter (\(Rule n _) -> n `notElem` confirmedNames) g
+          | otherwise    = g
+
+        new = map filterRuleGroup old
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
-  let ls = lines raw
+  let [rules', _:myTicket', _:tickets'] = splitOn [""] $ lines raw
 
-  let [fields, _:ticket, _:nearbyLines] = splitOn [""] ls
+  let rules     = mapMaybe parseRule rules'
+  let myTicket  = head (matrixify myTicket')
+  let tickets   = matrixify tickets'
 
-  let rules = mapMaybe parseFields fields
-  let nearby = matrixify nearbyLines
-
-  let invalidSum = sum $ mapMaybe (checkRow rules) nearby
-  putStrLn $ "Part 1: " ++ show invalidSum
+  let ans1 = sum $ mapMaybe (checkRow rules) tickets
+  putStrLn $ "Part 1: " ++ show ans1
   
-  let valid = filter (isNothing . checkRow rules) nearby
-  let groups = transpose valid
+  let validTickets = filter (isNothing . checkRow rules) tickets
+  let valueGroups = transpose validTickets
 
-  let possibilities = map (getValidRules rules) groups
-  let deduced = deduce possibilities
+  let possibleRules = map (validateRules rules) valueGroups
+  let assignments = zip myTicket (concat $ deduceRules possibleRules)
+  let departures = filter ( \(_, Rule n _) -> "departure" `isPrefixOf ` n) assignments
 
-  let ticketVals = head $ matrixify ticket
-  let idxs = map snd $ filter ( \([Rule n _], _) -> "departure" `isPrefixOf ` n) $ zip deduced [0..]
-  let ans2 = product [ fromIntegral (ticketVals !! idx) | idx <- idxs]
-
+  let ans2 = product $ map fst departures
   putStrLn $ "Part 2: " ++ show ans2

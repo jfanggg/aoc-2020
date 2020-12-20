@@ -42,10 +42,10 @@ addVec4 a b = Vec4 x y z w
 
 stepPosition :: Grid -> Vec4 -> Status
 stepPosition grid pos = status
-  where read grid pos = M.findWithDefault I pos grid
+  where readAt grid pos = M.findWithDefault I pos grid
     
-        me = read grid pos
-        neighbors = map (read grid . addVec4 pos) deltas
+        me = readAt grid pos
+        neighbors = map (readAt grid . addVec4 pos) deltas
         neighborsA = length $ filter (== A) neighbors
 
         status = case me of 

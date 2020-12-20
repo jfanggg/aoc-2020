@@ -1,7 +1,6 @@
 module Main where
 
 import qualified Data.Map as M
-import Debug.Trace
 
 data Status = A | I deriving (Show, Eq);
 data Vec4 = Vec4 {
@@ -25,7 +24,7 @@ parseStatus c = case c of
 
 deltas :: [Vec4]
 deltas = [Vec4 x y z w |  x <- [-1..1], y <- [-1..1], z <- [-1..1], w <- [-1..1], 
-                        not (x == 0 && y == 0 && z == 0 && w == 0)]
+                          not (x == 0 && y == 0 && z == 0 && w == 0)]
 
 parseRow :: Int -> String -> Grid
 parseRow r row = M.fromList points
@@ -33,22 +32,20 @@ parseRow r row = M.fromList points
 
 axisRange :: Grid -> (Vec4 -> Int) -> [Int]
 axisRange grid getter = [lo - 1 .. hi + 1]
-  where func vec _ (lo, hi) = let val = getter vec in (min lo val, max hi val)
-        acc = (maxInt, minInt)
-        (lo, hi) = M.foldrWithKey func acc grid
+  where func vec _ (l, h) = let val = getter vec in (min l val, max h val)
+        (lo, hi) = M.foldrWithKey func (maxInt, minInt) grid
 
 addVec4 :: Vec4 -> Vec4 -> Vec4
-addVec4 a b = Vec4 (getX a + getX b) (getY a + getY b) (getZ a + getZ b) (getW a + getW b)
-
-readAt :: Grid -> Vec4 -> Vec4 -> Status
-readAt grid pos dir = status
-  where newPos = addVec4 pos dir
-        status = M.findWithDefault I newPos grid
+addVec4 a b = Vec4 x y z w
+  where apply f = f a + f b 
+        [x, y, z, w] = apply <$> [getX, getY, getZ, getW]
 
 stepPosition :: Grid -> Vec4 -> Status
 stepPosition grid pos = status
-  where me = readAt grid pos (Vec4 0 0 0 0)
-        neighbors = map (readAt grid pos) deltas
+  where read grid pos = M.findWithDefault I pos grid
+    
+        me = read grid pos
+        neighbors = map (read grid . addVec4 pos) deltas
         neighborsA = length $ filter (== A) neighbors
 
         status = case me of 
@@ -63,16 +60,16 @@ stepGrid p2 old = new
 
         new = M.fromList $ map (\c -> (c, stepPosition old c)) coords
 
-countA :: Grid -> Int
-countA = length . M.filter (== A)
+solve :: Bool -> Grid -> Int
+solve p2 grid0 = active
+  where grid6 = iterate (stepGrid p2) grid0 !! 6
+        active = length $ M.filter (== A) grid6
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let grid0 = M.unions $ zipWith parseRow [0..] $ lines raw
 
-  let ans1 = countA $ iterate (stepGrid False) grid0 !! 6
+  let [ans1, ans2] = solve <$> [False, True] <*> pure grid0
   putStrLn $ "Part 1: " ++ show ans1
-
-  let ans2 = countA $ iterate (stepGrid True) grid0 !! 6
   putStrLn $ "Part 2: " ++ show ans2

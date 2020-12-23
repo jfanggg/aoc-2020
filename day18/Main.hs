@@ -1,36 +1,36 @@
 module Main where
 
-import Debug.Trace
 import Data.Char ( digitToInt )
 
-eval :: [Int] -> String -> Int
--- eval stack tokens | trace ("eval " ++ show stack ++ " " ++ show tokens) False = undefined
-eval stack [] = head stack
-eval stack (h:t)
-  | h `elem` ['0'..'9'] = eval (digitToInt h:stack) t
-  | h == '*'            = let (f:s:r) = stack in eval (f*s:r) t
-  | h == '+'            = let (f:s:r) = stack in eval (f+s:r) t
+eval :: String -> Int
+eval = run []
+  where run stack [] = head stack
+        run stack (h:t) = case h of 
+          '*' -> let (f:s:r) = stack in run (f*s:r) t
+          '+' -> let (f:s:r) = stack in run (f+s:r) t
+          _   -> run (digitToInt h:stack) t
 
--- shuntingYard output operator tokens | trace ("shuntingYard " ++ show tokens ++ " " ++ show output ++ " " ++ show operator) False = undefined
-shuntingYard :: Bool -> [Char] -> [Char] -> String -> String
-shuntingYard p2 output opStack [] = reverse output ++ opStack
-shuntingYard p2 output opStack (h:t) 
-  | h `elem` ['0'..'9'] = shuntingYard p2 (h:output) opStack t
-  | h == '+'            = let ops = takeWhile (`elem` if p2 then ['+'] else ['+', '*']) opStack in 
-                          shuntingYard p2 (reverse ops ++ output) (h:drop (length ops) opStack)t
-  | h == '*'            = let ops = takeWhile (`elem` ['+', '*']) opStack in 
-                          shuntingYard p2 (reverse ops ++ output) (h:drop (length ops) opStack)t
-  | h == '('            = shuntingYard p2 output (h:opStack) t
-  | h == ')'            = let ops = takeWhile (/= '(') opStack in
-                          shuntingYard p2 (reverse ops ++ output) (drop (length ops + 1) opStack) t
+shuntingYard :: Bool -> String -> String
+shuntingYard = run [] []
+  where run output opStack _ [] = reverse output ++ opStack
+        run output opStack p2 (h:t) = case h of 
+          '+' -> let ops = takeWhile (`elem` if p2 then ['+'] else ['+', '*']) opStack in 
+                  run (reverse ops ++ output) (h:drop (length ops) opStack) p2 t
+          '*' -> let ops = takeWhile (`elem` ['+', '*']) opStack in 
+                  run (reverse ops ++ output) (h:drop (length ops) opStack) p2 t
+          '(' -> run output (h:opStack) p2 t
+          ')' -> let ops = takeWhile (/= '(') opStack in
+                  run (reverse ops ++ output) (drop (length ops + 1) opStack) p2 t
+          _   -> run (h:output) opStack p2 t
+
+solve :: Bool -> [String] -> Int
+solve p2 exprs = sum $ map (eval . shuntingYard p2) exprs
 
 main :: IO ()
 main = do
   raw <- readFile "input.txt"
   let exprs =  map (filter (/= ' ')) $ lines raw 
   
-  let ans1 = sum $ map (eval [] . shuntingYard False [] []) exprs
+  let [ans1, ans2] = solve <$> [False, True] <*> pure exprs
   putStrLn $ "Part 1: " ++ show ans1
-
-  let ans2 = sum $ map (eval [] . shuntingYard True [] []) exprs
   putStrLn $ "Part 2: " ++ show ans2
